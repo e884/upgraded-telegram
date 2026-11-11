@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NCCU 面試題庫</title>
+<style>
+  :root {
+    --bg: #1e1e1e;
+    --bg2: #262626;
+    --hover: #2f2f2f;
+    --border: #363636;
+    --text: #dadada;
+    --muted: #999999;
+    --faint: #666666;
+    --green: #44cf6e;
+    --nccu-blue: #23417D;
+    --nccu-blue-edge: #3059AB;
+    --link: #A7BCE6;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+    font-size: 14px;
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    grid-template-rows: 44px 1fr;
+    grid-template-areas: "panel header" "panel graph";
+    overflow: hidden;
+  }
+  button { font: inherit; }
+
+  #panel { grid-area: panel; background: var(--bg2); border-right: 1px solid var(--border); overflow-y: auto; padding: 8px 24px 40px; }
+  .section { padding: 16px 0; border-bottom: 1px solid var(--border); }
+  .section:last-child { border-bottom: none; }
+  .section-title { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .row { display: flex; align-items: center; justify-content: space-between; }
+  .bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+  .bar > span { display: block; height: 100%; width: 0; background: var(--green); border-radius: 3px; transition: width .25s ease; }
+
+  .qhead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .qid { font-size: 18px; font-weight: 600; line-height: 1.4; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); border: 1px solid var(--border); border-radius: 10px; padding: 2px 9px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .qtext { font-size: 16px; line-height: 1.6; margin-top: 10px; }
+  .empty { color: var(--muted); line-height: 1.6; }
+
+  .check { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+  .check input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .check .box { width: 18px; height: 18px; border-radius: 4px; border: 1.5px solid var(--faint); background: var(--bg2); display: grid; place-items: center; transition: background .15s, border-color .15s; }
+  .check .box svg { opacity: 0; }
+  .check input:checked + .box { background: var(--green); border-color: var(--green); }
+  .check input:checked + .box svg { opacity: 1; }
+  .check input:focus-visible + .box { outline: 2px solid var(--link); outline-offset: 2px; }
+
+  textarea { width: 100%; min-height: 130px; margin-top: 12px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; resize: vertical; font: inherit; line-height: 1.6; }
+  textarea:focus { outline: none; border-color: var(--nccu-blue-edge); }
+  .answer-view { margin-top: 12px; white-space: pre-wrap; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; line-height: 1.6; }
+  .actions { display: flex; justify-content: flex-end; margin-top: 10px; }
+  .btn { border-radius: 6px; padding: 6px 16px; cursor: pointer; border: 1px solid var(--border); background: var(--border); color: var(--text); }
+  .btn.primary { background: var(--nccu-blue); border-color: var(--nccu-blue-edge); color: #fff; font-weight: 600; }
+  .btn:hover { filter: brightness(1.15); }
+
+  .pills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .pill { text-align: center; padding: 6px 0; border-radius: 6px; background: var(--border); color: var(--muted); }
+  .pill.active { background: var(--nccu-blue); color: #fff; font-weight: 600; }
+
+  .group-title { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; margin: 12px 0 6px; }
+  .group-title:first-of-type { margin-top: 0; }
+  .line { width: 28px; border-top: 2px solid var(--text); }
+  .line.dotted { border-top-style: dotted; }
+  a.conn { display: grid; grid-template-columns: 16px 1fr; gap: 6px; align-items: baseline; padding: 4px 6px; border-radius: 4px; text-decoration: none; color: #b3b3b3; }
+  a.conn:hover { background: var(--hover); }
+  .arrow { color: var(--muted); }
+  .cid { color: var(--link); font-weight: 600; }
+  .ctext { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .none { color: var(--faint); padding: 2px 6px; }
+
+  header { grid-area: header; display: flex; align-items: center; gap: 6px; padding: 0 12px; position: relative; }
+  .icon-btn { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 6px; border: none; background: transparent; color: var(--muted); cursor: pointer; }
+  .icon-btn:hover { background: var(--hover); color: var(--text); }
+  .title { position: absolute; left: 50%; transform: translateX(-50%); color: var(--muted); pointer-events: none; }
+  .spacer { flex: 1; }
+  .seg { display: inline-flex; background: var(--border); border-radius: 6px; padding: 3px; gap: 2px; }
+  .seg button { border: none; background: transparent; color: var(--muted); border-radius: 4px; padding: 3px 12px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--nccu-blue); color: #fff; font-weight: 600; }
+  .switch { display: inline-flex; align-items: center; gap: 8px; border: none; background: transparent; color: var(--muted); cursor: pointer; padding: 4px 6px; border-radius: 6px; margin-left: 6px; }
+  .switch:hover { background: var(--hover); }
+  .track { width: 34px; height: 20px; border-radius: 10px; background: var(--border); position: relative; transition: background .15s; }
+  .knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #c8c8c8; transition: transform .15s; }
+  .switch[aria-pressed="true"] .track { background: var(--green); }
+  .switch[aria-pressed="true"] .knob { transform: translateX(14px); background: #fff; }
+  .switch[aria-pressed="true"] { color: var(--text); }
+
+  #graphWrap { grid-area: graph; position: relative; overflow: hidden; }
+  #graph { display: block; width: 100%; height: 100%; cursor: grab; }
+  #graph.dragging { cursor: grabbing; }
+  #graph.on-node { cursor: pointer; }
+  #status { position: absolute; right: 0; bottom: 0; background: var(--bg2); color: var(--muted); font-size: 12px; padding: 5px 12px; border-top-left-radius: 6px; display: flex; align-items: center; gap: 8px; }
+  #status .dot { width: 7px; height: 7px; }
+</style>
+</head>
+<body>
+  <aside id="panel" aria-live="polite"></aside>
+
+  <header>
+    <button class="icon-btn" id="back" aria-label="Back">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </button>
+    <button class="icon-btn" id="forward" aria-label="Forward">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+    <span class="title" id="viewTitle"></span>
+    <span class="spacer"></span>
+    <div class="seg" role="group" aria-label="Language">
+      <button data-lang="zh" aria-pressed="true">中</button>
+      <button data-lang="en" aria-pressed="false">EN</button>
+    </div>
+    <button class="switch" id="completedToggle" aria-pressed="true">
+      <span class="track"><span class="knob"></span></span>
+      <span id="completedLabel"></span>
+    </button>
+  </header>
+
+  <main id="graphWrap">
+    <canvas id="graph" aria-label="Question graph"></canvas>
+    <div id="status"><span class="dot" id="statusDot"></span><span id="statusText"></span></div>
+  </main>
+
+<script>
+/* ---------- Data: edit questions and links here ---------- */
+const SECTIONS = {
+  A: { zh: "自我介紹",       en: "Self-introduction",  color: "#F5F3F2" },
+  B: { zh: "史萊姆創作者",   en: "Slime creator",      color: "#EAB3AE" },
+  C: { zh: "市集與兒童教學", en: "Markets & teaching", color: "#DF8C86" },
+  D: { zh: "產業經歷",       en: "Industry",           color: "#D4665E" },
+  E: { zh: "國科會研究",     en: "NSTC research",      color: "#A7BCE6" },
+  F: { zh: "新研究",         en: "New research",       color: "#7898D9" },
+  G: { zh: "政大與未來",     en: "NCCU & future",      color: "#4874CB" },
+  H: { zh: "其他經歷",       en: "Other experience",   color: "#BE3C32" },
+  I: { zh: "聊天與挑戰",     en: "Chat & pushback",    color: "#3059AB" },
+};
+const SECTION_ANGLE = { F: 90, E: 45, G: 0, I: -45, H: -90, C: -135, D: 180, B: 135 };
+
+// id | level (q = Quick, m = Medium, d = Deep) | 中文 | English
+const QUESTIONS_RAW = `
+A1|q|一分鐘自我介紹|One-minute self-introduction.
+B1|q|你幾歲開始做史萊姆影片？為什麼開始？|How old were you when you started making slime videos? Why did you start?
+B2|m|76萬觀看的教學影片在教什麼？為什麼會紅？|What does your 760,000-view tutorial teach, and why did it take off?
+B4|q|《捏捏做失敗怎麼辦？》51.4萬觀看，捏捏和史萊姆有什麼不同？|Your video "What if your squishy fails?" got 514,000 views. How are squishies different from slime?
+B5|q|你怎麼決定拍什麼？|How do you decide what to film?
+B6|m|你的觀眾大概是誰？幾歲？你怎麼知道？|Who is your audience, roughly how old, and how do you know?
+B7|d|你怎麼判斷一支影片成功？只看觀看數嗎？|How do you judge whether a video is successful? Only by views?
+B8|m|你說會依內容目的選擇呈現方式，什麼時候用教學、什麼時候用 ASMR？|You said you choose how to present content based on its purpose. When do you use a tutorial, and when ASMR?
+B9|d|會留言的觀眾，跟真的買的人是同一群嗎？|Are the viewers who comment the same people who actually buy?
+B13|m|線上買史萊姆摸不到，你怎麼讓顧客知道手感？|People buying slime online can't touch it. How do you let customers know how it feels?
+B15|m|當年的經驗怎麼影響你現在看兒童和短影音？|How does that experience shape the way you see children and short videos today?
+C1|q|你在市集負責什麼？|What were you responsible for at the markets?
+C2|m|贊助是怎麼談成的？|How did you land sponsorships?
+C4|q|點歌貼文428則留言，點子怎麼來的？|Your song-request post got 428 comments. Where did the idea come from?
+C5|m|最大的困難是什麼？怎麼解決？|What was the biggest difficulty, and how did you solve it?
+C6|m|四屆約九千人，你怎麼判斷一屆成功？|About 9,000 people over four editions. How did you judge whether an edition succeeded?
+C7|d|428則留言之後，怎麼知道有沒有轉換成實際來參加的人？|After 428 comments, how did you know whether that turned into people actually attending?
+C8|q|你的課是怎麼帶的？|How do you run your classes?
+C9|m|每月主題和故事怎麼設計？舉一個例子。|How do you design the monthly themes and stories? Give an example.
+C11|m|家長會擔心嗎？你怎麼跟家長溝通？|Do parents worry? How do you communicate with them?
+C12|m|30堂課、120多位孩子，你學到什麼？|30 classes and more than 120 children: what did you learn?
+C13|m|你怎麼提問引導孩子？孩子的反應讓你學到什麼溝通的事？|How do you use questions to guide the children? What did their reactions teach you about communication?
+C14|d|你的研究在問什麼讓人想買，但你也在教孩子，你怎麼看短影音對孩子的影響？|Your research asks what makes people want to buy, but you also teach children. How do you see short videos' effect on children?
+D1|q|我看到你在富士軟片實習，平常都在忙什麼？|I see you're interning at FUJIFILM. What keeps you busy there?
+D2|q|富士軟片？是做相機、底片的那個嗎？|FUJIFILM? The company that makes cameras and film?
+D3|q|你拍的「成功案例」是什麼內容？|What are the "success case" videos you shoot about?
+D4|q|CRM 相關作業，你實際做了什麼？|What do you actually do for CRM?
+D5|m|你進去才兩個月，學到最重要的是什麼？|You've only been there two months. What's the most important thing you've learned?
+D7|m|企業的短影音和你的史萊姆短影音，目的和成效有什麼不同？|How do corporate short videos differ from your slime videos in purpose and results?
+D8|q|你怎麼進 GAGA monster 的？|How did you join GAGA monster?
+D9|q|為什麼把盲盒和雪粉結合？|Why combine blind boxes with snow-powder slime?
+D11|m|五十次失敗裡最挫折的是哪一次？|Of those 50+ failures, which was the most frustrating?
+D13|q|雪粉盲盒上架後賣得怎麼樣？|How did the snow-powder blind box sell after launch?
+D14|d|平均1,500次以上的觀看算好嗎？跟什麼比？|Is an average of 1,500+ views good? Compared with what?
+D15|d|觀看數從幾百跳到八千多，是造型的關係嗎？會不會有別的原因？|Views jumped from a few hundred to over 8,000. Was it the food shapes? Could there be other reasons?
+D16|d|觀看數變高之後，材料有賣得比較好嗎？|After views went up, did the materials sell better?
+D17|m|如果重來一次，GAGA 的短影音你會怎麼做不一樣？|If you could redo the GAGA short videos, what would you do differently?
+D18|d|啵啵泡泡強調觸覺加聲音，你的新研究為什麼只看觸感？|啵啵泡泡 combines touch and sound. Why does your new research look only at touch?
+D19|q|你在 GAGA monster 負責什麼？|What were you responsible for at GAGA monster?
+E1|m|簡單介紹你的研究主題、理論架構和方法。|Briefly introduce your research topic, theoretical framework and method.
+E2|q|計畫做到哪裡？做了什麼？|How far along is the project? What have you done so far?
+E3|q|指導老師給你什麼建議？|What advice did your advisor give you?
+E4|d|S-O-R 是什麼？為什麼用它？|What is S-O-R, and why use it?
+E5|d|S-O-R 是1974年的模型耶，現在還適用嗎？|S-O-R is a model from 1974. Does it still apply today?
+E6|d|情感共鳴你怎麼量？跟「喜歡這則廣告」有什麼不同？|How do you measure emotional resonance? How is it different from simply liking the ad?
+E7|d|為什麼情感共鳴是中介，不是調節？|Why is emotional resonance a mediator rather than a moderator?
+E8|d|AI 和人類廣告怎麼操弄？受試者看得出來嗎？|How do you manipulate AI versus human ads? Can participants tell the difference?
+E9|d|受試者什麼時候知道是 AI 做的？|When do participants find out the ad was made by AI?
+E10|d|你操弄的是標示，所以研究的是 AI 本身，還是人們對 AI 的印象？|You're manipulating a label, so are you studying AI itself, or people's impression of AI?
+E11|d|如果 AI 和人做的廣告品質本來就不同，怎麼知道差異來自來源？|If AI-made and human-made ads differ in quality to begin with, how do you know the difference comes from the source?
+E12|d|會不會本來就喜歡這個品牌的人，才比較有共鳴？|Couldn't it be that people who already like the brand simply feel more resonance?
+E13|d|為什麼預期感性訴求下 AI 和人類的差異更大？|Why do you expect a bigger AI–human gap for emotional appeals?
+E14|m|Z 世代怎麼定義？受試者從哪裡找？|How do you define Gen Z, and where do your participants come from?
+E16|m|為什麼要加深度訪談？量化不夠嗎？|Why add in-depth interviews? Isn't the quantitative part enough?
+E18|q|你修過哪些研究方法或統計課？|Which research methods or statistics courses have you taken?
+E19|d|你預期的結果是什麼？如果和假設相反呢？|What results do you expect? What if they contradict your hypotheses?
+E20|d|如果 AI 跟人類沒差，你的研究還有價值嗎？|If AI and human ads turn out the same, does your study still have value?
+E21|d|這個計畫的學術價值是什麼？|What is the academic value of this project?
+E22|d|所以這個題目先前已經有人做過囉？|So this topic has already been studied before?
+E23|d|為什麼從傳播學的視角切入？|Why approach it from a communication perspective?
+E24|d|你的結果對「AI 廣告要不要標示」有什麼啟示？|What would your results suggest about whether AI ads should be labelled?
+F1|m|用一句話說，你的研究問題是什麼？|In one sentence, what is your research question?
+F2|m|你說部分策略判斷仍仰賴經驗與推測，具體是哪一個？|You said some of your strategy decisions still relied on experience and guesswork. Which decision, specifically?
+F3|d|國科會做 AI 廣告，現在想做觸感玩具短影音，為什麼換題目？|Your NSTC project studies AI ads, and now you want to study tactile-toy short videos. Why change topics?
+F4|d|為什麼你覺得這個現象能用理論解釋？|Why do you think this phenomenon can be explained by theory?
+F5|m|為什麼選這個題目、這個研究對象？|Why did you choose this topic and these research subjects?
+F6|m|具身心理模擬是什麼？|What is embodied mental simulation?
+F7|m|使用與滿足理論是什麼？跟你的研究有什麼關係？|What is uses and gratifications theory, and how does it relate to your research?
+F8|d|觸覺想像怎麼量？受試者怎麼知道自己有想像觸感？|How do you measure haptic imagery? How would participants know they imagined the touch?
+F9|d|「看就夠了」要怎麼測？|How will you test "watching is enough"?
+F10|d|購買意願不等於真的購買，怎麼處理？|Purchase intention isn't the same as actually buying. How do you deal with that?
+F11|d|兩支影片除了觸感細節，其他怎麼控制？|Apart from tactile detail, how do you keep everything else the same in the two videos?
+F12|d|你自己是史萊姆創作者又自己拍影片，會不會有偏誤？|You're a slime creator filming your own videos. Isn't there a risk of bias?
+F13|m|你的觀眾很多是孩子，為什麼研究成人？|Many of your viewers are children. Why study adults?
+F14|d|ASMR 已經很多人研究了，你的差在哪？|ASMR has already been studied a lot. How is your research different?
+F15|d|如果結果是又想買、又看得開心，代表什麼？|If viewers both want to buy and enjoy watching, what does that mean?
+F16|d|這個研究會不會只是在幫賣家賣更多東西？|Isn't this research just helping sellers sell more?
+F17|d|為什麼這是傳播問題，不是行銷問題？|Why is this a communication question rather than a marketing one?
+F18|d|如果只能留一個理論，你留哪一個？|If you could keep only one theory, which would you keep?
+F19|d|這個研究的學術價值是什麼？|What is the academic value of this research?
+F20|q|以後會繼續做這個主題嗎？|Will you keep researching this topic in the future?
+G1|m|為何選政大傳播而非世新相關系所？|Why NCCU's communication program instead of related programs at Shih Hsin?
+G2|q|未來修課方向？|What courses do you plan to take?
+G3|m|想在研究所獲得什麼？學到什麼？|What do you want to gain and learn in graduate school?
+G4|m|你對產業有興趣，為什麼不直接就業或創業？|You're interested in industry. Why not go straight to work or start a business?
+G5|m|請說明讀研究所的動機和規劃。|Please explain your motivation for graduate school and your plans there.
+G6|d|未來研究方向？|What is your future research direction?
+G7|m|所以你最想學的是理論嗎？|So what you most want to learn is theory?
+G8|m|公廣系學到的什麼能用在研究所？開學前打算補什麼？|What have you learned in the PR and advertising department that you can use in graduate school? What do you plan to make up before term starts?
+G9|q|還申請了哪些學校？|Which other schools did you apply to?
+G10|m|你說希望成為自己生命的領航者，是什麼意思？|You said you hope to become the navigator of your own life. What does that mean?
+G11|q|你有什麼問題想問我們？還有其他問題嗎？|Do you have any questions for us? Any other questions?
+H1|m|你說原以為孩子喜歡，結果大人也樂在其中，為什麼？|You said you thought only the children would enjoy it, but the adults did too. Why?
+H2|q|為什麼選國學院大學？|Why did you choose Kokugakuin University?
+H4|m|可以用日文或英文簡單介紹你的研究嗎？|Can you briefly introduce your research in Japanese or English?
+H6|m|你開始思考玩具如何融入童年，跟你的研究有什麼關係？|You started thinking about how toys become part of childhood. How does that relate to your research?
+H7|q|《麻吉一家》的「滑動、心動、行動」是什麼？|What is the "swipe, be moved, act" (滑動、心動、行動) strategy in 《麻吉一家》?
+H8|d|你怎麼知道「心動」會變成「行動」？|How do you know "being moved" turns into "acting"?
+H10|q|金犢獎摸魚酥廣告的概念是什麼？|What was the concept of your Times Young Creative Awards ad for 摸魚酥?
+H12|q|AI 影片廣告課，你自己那組做了什麼？用過哪些 AI 工具？|In the AI video ad course, what did your own group make? Which AI tools did you use?
+H14|d|長照廣告想引發情感共鳴，你怎麼知道觀眾真的有共鳴？|Your long-term-care ad aimed to evoke emotional resonance. How do you know viewers actually felt it?
+H16|m|你們探討演算法如何影響選擇，跟你的研究有什麼關係？|You explored how algorithms shape people's choices. How does that relate to your research?
+H18|m|可以聊聊你的背景嗎？|Could you tell us about your background?
+I1|m|有沒有什麼興趣是你最喜歡、也維持最久的？|Is there an interest you love most and have kept up the longest?
+I3|q|你自己會因為短影音買東西嗎？最近一次是什麼？|Do you buy things because of short videos? What was the last thing?
+I4|m|你最近看到最有印象的短影音是什麼？為什麼？|What short video has left the biggest impression on you recently, and why?
+I5|q|你自己平常會用 AI 嗎？怎麼用？|Do you use AI in your daily life? How?
+I6|m|你覺得 AI 會取代你做的這類內容嗎？|Do you think AI will replace the kind of content you make?
+I7|m|從創作者變成研究者，最大的差別是什麼？|What's the biggest difference between being a creator and being a researcher?
+I8|d|「看了想買」好像大家都知道吧？|Isn't "watching makes you want to buy" just common sense?
+I9|d|史萊姆這個題目會不會太小眾？|Isn't slime too niche a topic?
+I10|d|最近有人呼籲加強演算法監管、保護兒少上網，你怎麼看？|There have been recent calls to strengthen algorithm regulation and protect young people online. What's your view?
+`;
+
+// Subtitles shown on the graph and in the panel: id | 中文短標 | English short title
+const SUBTITLES_RAW = `
+A1|自我介紹|Self-introduction
+B1|開始做影片|Starting videos
+B2|76萬教學影片|The 760k tutorial
+B4|捏捏 vs 史萊姆|Squishy vs slime
+B5|怎麼選題|Choosing topics
+B6|觀眾是誰|Your audience
+B7|成功只看觀看數？|Success = views?
+B8|教學 vs ASMR|Tutorial vs ASMR
+B9|留言者＝買家？|Commenters = buyers?
+B13|線上傳達手感|Conveying feel online
+B15|兒童與短影音|Kids and short video
+C1|市集角色|Market role
+C2|談贊助|Landing sponsors
+C4|428則留言|The 428-comment post
+C5|最大困難|Biggest difficulty
+C6|判斷成功|Judging success
+C7|留言→來參加？|Comments → attendance?
+C8|怎麼帶課|Running classes
+C9|主題與故事|Themes and stories
+C11|家長的擔心|Parents' worries
+C12|帶課學到什麼|Lessons from teaching
+C13|提問引導孩子|Questioning children
+C14|短影音對孩子的影響|Short video and kids
+D1|富士軟片的工作|Work at FUJIFILM
+D2|是做相機的嗎？|Cameras and film?
+D3|成功案例影片|Success-case videos
+D4|CRM 工作|CRM work
+D5|兩個月學到什麼|The two-month lesson
+D7|企業 vs 史萊姆影片|Corporate vs slime videos
+D8|怎麼加入 GAGA|Joining GAGA
+D9|盲盒＋雪粉|Blind box + snow powder
+D11|最挫折的失敗|Worst failure
+D13|盲盒銷售|Blind-box sales
+D14|1,500次算好嗎？|Is 1,500 good?
+D15|觀看數暴增的原因|Why views jumped
+D16|有帶動銷售嗎？|Did sales rise?
+D17|重來會怎麼做|Redoing the videos
+D18|為什麼只看觸感|Why only touch?
+D19|GAGA 的工作|Work at GAGA monster
+E1|介紹國科會研究|Your NSTC project
+E2|計畫進度|Progress so far
+E3|指導老師的建議|Advisor's advice
+E4|S-O-R 是什麼|What S-O-R is
+E5|1974年的模型？|A 1974 model?
+E6|衡量情感共鳴|Measuring resonance
+E7|中介 vs 調節|Mediator vs moderator
+E8|操弄 AI／人類|Manipulating the source
+E9|何時知道是 AI|When they learn it's AI
+E10|標示 vs AI 本身|Label vs AI itself
+E11|品質的干擾|Quality confound
+E12|原本的品牌好感|Prior brand liking
+E13|為什麼是 H3|Why H3
+E14|Z 世代與招募|Gen Z and recruiting
+E16|為什麼加訪談|Why interviews
+E18|方法與統計課|Methods courses
+E19|預期結果|Expected results
+E20|沒差異還有價值？|Value if no difference
+E21|學術價值|Academic value
+E22|有人做過嗎？|Done before?
+E23|為什麼從傳播切入|Why communication
+E24|AI 廣告標示|Labelling AI ads
+F1|研究問題|Your research question
+F2|哪個判斷靠推測|The guesswork decision
+F3|為什麼換題目|Why switch topics
+F4|為什麼用理論|Why theory
+F5|為什麼選這題|Why this topic
+F6|具身心理模擬|Embodied simulation
+F7|使用與滿足理論|Uses and gratifications
+F8|衡量觸覺想像|Measuring haptic imagery
+F9|測「看就夠了」|Testing "watching is enough"
+F10|意願≠購買|Intention ≠ buying
+F11|控制兩支影片|Controlling the videos
+F12|自己的偏誤|Your own bias
+F13|為什麼研究成人|Why adults
+F14|ASMR 研究|ASMR research
+F15|又想買又開心|Buy and enjoy
+F16|只是幫賣家？|Just helping sellers?
+F17|傳播 vs 行銷|Communication vs marketing
+F18|只留一個理論|One theory only
+F19|研究的學術價值|Research value
+F20|會繼續研究嗎|Keep researching?
+G1|為什麼選政大|Why NCCU
+G2|修課方向|Courses
+G3|想獲得什麼|What you want to gain
+G4|為什麼不就業|Why not work
+G5|動機與規劃|Motivation and plans
+G6|未來研究方向|Future research
+G7|最想學理論？|Mostly theory?
+G8|能帶來的與要補的|Skills and gaps
+G9|其他學校|Other schools
+G10|生命的領航者|Navigator of your life
+G11|想問我們什麼|Questions for us
+H1|大人也喜歡|Adults enjoyed it too
+H2|為什麼選國學院|Why Kokugakuin
+H4|用日文或英文介紹研究|Research in Japanese or English
+H6|玩具與童年|Toys and childhood
+H7|滑動、心動、行動|Swipe, be moved, act
+H8|心動→行動|Moved → acting
+H10|摸魚酥廣告|The 摸魚酥 ad
+H12|AI 影片課|AI video course
+H14|長照廣告的共鳴|Long-term-care ad
+H16|演算法與選擇|Algorithms and choice
+H18|你的背景|Your background
+I1|最久的興趣|Longest interest
+I3|因短影音購物|Buying from videos
+I4|印象深刻的短影音|A memorable video
+I5|你怎麼用 AI|Your AI use
+I6|AI 會取代你？|AI replacing you?
+I7|創作者 vs 研究者|Creator vs researcher
+I8|這是常識吧？|Common sense?
+I9|太小眾？|Too niche?
+I10|演算法監管|Algorithm regulation
+`;
+
+// Direct: B is a follow-up the panel would ask after A. Indirect: she can steer from A to B.
+const DIRECT_RAW = `
+A1>B1 A1>C1 A1>C8 A1>D1 A1>D19 A1>E1 A1>E2 A1>F1
+B2>B7 B1>B5 B5>B8 B1>B6 B6>B9 B1>B13 B1>B15 B1>B2 B1>B4
+C1>C2 C1>C4 C4>C7 C1>C5 C1>C6 C6>C7 C8>C9 C8>C11 C8>C12 C12>C13 C13>C14
+D1>D2 D1>D3 D3>D7 D1>D4 D1>D5 D19>D8 D19>D9 D9>D13 D19>D15 D15>D14 D15>D16 D15>D17 D19>D18 D9>D11
+E1>E2 E1>E4 E4>E5 E1>E6 E6>E7 E6>E12 E1>E8 E8>E9 E9>E10 E8>E11 E1>E13 E1>E14 E1>E16 E1>E19 E19>E20 E1>E21 E21>E22 E21>E23 E21>E24 E2>E3 E2>E18
+F1>F5 F5>F2 F5>F14 F14>F19 F5>F17 F17>F19 F19>F16 F1>F3 F1>F4 F4>F6 F6>F8 F4>F7 F7>F9 F9>F10 F9>F15 F4>F18 F1>F11 F11>F12 F1>F13 F13>I10 F1>F20 F1>I8 F1>I9
+G1>G2 G2>G8 G1>G7 G1>G9 G4>G5 G5>G3 G5>G6 G6>F1 G5>G10
+H2>H4 H2>H1 H1>H6 H7>H8
+I4>I3 I5>I6
+`;
+const INDIRECT_RAW = `
+B2>D15 B4>F1 B7>D14 B8>F7 B9>F10 B13>F6 B15>C14 C6>B7 C7>F9 C14>F13 C14>I10
+D7>F1 D15>F11 D16>F10 D18>F11 F2>D15 E1>F1 F3>E1 G1>F1
+H10>E1 H6>F13 H8>F9 H12>E1 H14>E6 H16>I10 I3>F15 I6>E10 I7>F12
+`;
+
+/* ---------- Text ---------- */
+const T = {
+  zh: {
+    pageTitle: "NCCU 面試題庫", view: "圖譜", completed: "已完成",
+    progress: "完成度", question: "題目", completion: "完成", answered: "已回答",
+    placeholder: "寫下你的回答…", save: "儲存", edit: "編輯",
+    depth: "深度", levels: { q: "快答", m: "中等", d: "深挖" },
+    connections: "連結", direct: "直接", indirect: "間接", none: "無",
+    empty: "點選圖上的節點開始。", saved: "已存在這台電腦", notSaved: "無法儲存：瀏覽器封鎖了本機儲存",
+  },
+  en: {
+    pageTitle: "NCCU interview bank", view: "Graph view", completed: "Completed",
+    progress: "Progress", question: "Question", completion: "Completion", answered: "Answered",
+    placeholder: "Write your answer…", save: "Save", edit: "Edit",
+    depth: "Depth", levels: { q: "Quick", m: "Medium", d: "Deep" },
+    connections: "Connections", direct: "Direct", indirect: "Indirect", none: "None",
+    empty: "Click a node to start.", saved: "Saved on this computer", notSaved: "Not saved: this browser blocks local storage",
+  },
+};
+
+/* ---------- Model ---------- */
+const QUESTIONS = QUESTIONS_RAW.trim().split("\n").map(line => {
+  const [id, level, zh, en] = line.split("|");
+  return { id, level, zh, en, section: id[0] };
+});
+const byId = Object.fromEntries(QUESTIONS.map(q => [q.id, q]));
+for (const line of SUBTITLES_RAW.trim().split("\n")) {
+  const [id, zh, en] = line.split("|");
+  if (byId[id]) byId[id].title = { zh, en }; else console.error("Subtitle for an unknown question:", id);
+}
+for (const q of QUESTIONS) if (!q.title) { console.error("Missing subtitle:", q.id); q.title = { zh: q.id, en: q.id }; }
+const parseLinks = raw => raw.trim().split(/\s+/).map(e => e.split(">"));
+const DIRECT = parseLinks(DIRECT_RAW);
+const INDIRECT = parseLinks(INDIRECT_RAW);
+for (const [a, b] of [...DIRECT, ...INDIRECT]) {
+  if (!byId[a] || !byId[b]) console.error("Link to an unknown question:", a, b);
+}
+const rel = Object.fromEntries(QUESTIONS.map(q => [q.id, { parents: [], children: [], out: [], in: [], neighbors: new Set() }]));
+for (const [a, b] of DIRECT) { rel[a].children.push(b); rel[b].parents.push(a); rel[a].neighbors.add(b); rel[b].neighbors.add(a); }
+for (const [a, b] of INDIRECT) { rel[a].out.push(b); rel[b].in.push(a); rel[a].neighbors.add(b); rel[b].neighbors.add(a); }
+const EDGES = [];
+const edgeKey = new Set();
+for (const [a, b] of DIRECT) { EDGES.push({ a, b, kind: "direct" }); edgeKey.add([a, b].sort().join("|")); }
+for (const [a, b] of INDIRECT) {
+  const k = [a, b].sort().join("|");
+  if (!edgeKey.has(k)) { EDGES.push({ a, b, kind: "indirect" }); edgeKey.add(k); }
+}
+const sectionCount = {};
+for (const q of QUESTIONS) sectionCount[q.section] = (sectionCount[q.section] || 0) + 1;
+
+/* ---------- Saved state (this computer only) ---------- */
+const KEY = "nccu-interview-graph-v1";
+let storageOk = true;
+let state = { lang: "zh", showCompleted: true, done: {}, answers: {} };
+try {
+  const saved = JSON.parse(localStorage.getItem(KEY) || "null");
+  if (saved && typeof saved === "object") state = { ...state, ...saved, done: saved.done || {}, answers: saved.answers || {} };
+} catch { storageOk = false; }
+function persist() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); storageOk = true; }
+  catch { storageOk = false; }
+  renderStatus();
+}
+const t = () => T[state.lang];
+const qText = q => q[state.lang];
+const qTitle = q => q.title[state.lang];
+const doneCount = () => QUESTIONS.filter(q => state.done[q.id]).length;
+
+/* ---------- Routing: #/q/ID ---------- */
+let selected = null;
+let editing = false;
+let draft = null;
+function routeId() {
+  const m = location.hash.match(/^#\/q\/([A-Za-z]\d+)$/);
+  const id = m && m[1].toUpperCase();
+  return id && byId[id] ? id : null;
+}
+function onRoute() {
+  selected = routeId();
+  editing = selected ? !state.answers[selected] : false;
+  draft = null;
+  document.title = selected ? `${qTitle(byId[selected])} · ${t().pageTitle}` : t().pageTitle;
+  renderPanel();
+  if (selected) ensureVisible(selected);
+  dirty = true;
+}
+window.addEventListener("hashchange", onRoute);
+document.getElementById("back").onclick = () => history.back();
+document.getElementById("forward").onclick = () => history.forward();
+
+/* ---------- Panel ---------- */
+const panel = document.getElementById("panel");
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const CHECK_SVG = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>';
+
+function connRow(arrow, id) {
+  const q = byId[id];
+  return `<a class="conn" href="#/q/${id}" title="${esc(qText(q))}"><span class="arrow">${arrow}</span><span class="cid ctext">${esc(qTitle(q))}</span></a>`;
+}
+function renderPanel() {
+  const L = t();
+  const openBox = document.getElementById("answerBox");
+  if (openBox && openBox.dataset.id === selected) draft = openBox.value;
+  const n = doneCount();
+  let html = `
+    <div class="section">
+      <div class="row"><span class="section-title" style="margin:0">${L.progress}</span><span>${n} / ${QUESTIONS.length}</span></div>
+      <div class="bar"><span style="width:${(n / QUESTIONS.length * 100).toFixed(2)}%"></span></div>
+    </div>`;
+  if (!selected) {
+    panel.innerHTML = html + `<div class="section"><div class="empty">${L.empty}</div></div>`;
+    return;
+  }
+  const q = byId[selected];
+  const sec = SECTIONS[q.section];
+  const r = rel[selected];
+  const answer = state.answers[selected] || "";
+  const directRows = [...r.parents.map(id => connRow("↑", id)), ...r.children.map(id => connRow("↓", id))].join("") || `<div class="none">${L.none}</div>`;
+  const indirectRows = [...r.out.map(id => connRow("→", id)), ...r.in.map(id => connRow("←", id))].join("") || `<div class="none">${L.none}</div>`;
+  html += `
+    <div class="section">
+      <div class="section-title">${L.question}</div>
+      <div class="qhead">
+        <span class="qid">${esc(qTitle(q))}</span>
+        <span class="chip"><span class="dot" style="background:${sec.color}"></span>${sec[state.lang]}</span>
+      </div>
+      <div class="qtext">${esc(qText(q))}</div>
+    </div>
+    <div class="section">
+      <div class="section-title">${L.completion}</div>
+      <label class="check"><input type="checkbox" id="doneBox" ${state.done[selected] ? "checked" : ""}><span class="box">${CHECK_SVG}</span><span>${L.answered}</span></label>
+      ${editing
+        ? `<textarea id="answerBox" data-id="${selected}" placeholder="${L.placeholder}">${esc(draft ?? answer)}</textarea>
+           <div class="actions"><button class="btn primary" id="saveBtn">${L.save}</button></div>`
+        : `<div class="answer-view">${esc(answer)}</div>
+           <div class="actions"><button class="btn" id="editBtn">${L.edit}</button></div>`}
+    </div>
+    <div class="section">
+      <div class="section-title">${L.depth}</div>
+      <div class="pills">${["q", "m", "d"].map(l => `<div class="pill ${q.level === l ? "active" : ""}">${L.levels[l]}</div>`).join("")}</div>
+    </div>
+    <div class="section">
+      <div class="section-title">${L.connections}</div>
+      <div class="group-title"><span class="line"></span>${L.direct}</div>
+      ${directRows}
+      <div class="group-title"><span class="line dotted"></span>${L.indirect}</div>
+      ${indirectRows}
+    </div>`;
+  panel.innerHTML = html;
+
+  document.getElementById("doneBox").onchange = e => {
+    if (e.target.checked) state.done[selected] = true; else delete state.done[selected];
+    persist(); renderPanel(); dirty = true;
+  };
+  const saveBtn = document.getElementById("saveBtn");
+  if (saveBtn) saveBtn.onclick = () => {
+    const v = document.getElementById("answerBox").value.trim();
+    if (v) { state.answers[selected] = v; editing = false; } else { delete state.answers[selected]; }
+    draft = null;
+    persist(); renderPanel();
+  };
+  const editBtn = document.getElementById("editBtn");
+  if (editBtn) editBtn.onclick = () => {
+    editing = true; draft = null; renderPanel();
+    const box = document.getElementById("answerBox");
+    box.focus(); box.setSelectionRange(box.value.length, box.value.length);
+  };
+}
+
+/* ---------- Header controls ---------- */
+const langButtons = [...document.querySelectorAll(".seg button")];
+const completedToggle = document.getElementById("completedToggle");
+function renderHeader() {
+  const L = t();
+  document.documentElement.lang = state.lang === "zh" ? "zh-Hant" : "en";
+  document.getElementById("viewTitle").textContent = L.view;
+  document.getElementById("completedLabel").textContent = L.completed;
+  langButtons.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === state.lang)));
+  completedToggle.setAttribute("aria-pressed", String(state.showCompleted));
+}
+langButtons.forEach(b => b.onclick = () => {
+  state.lang = b.dataset.lang; persist(); renderHeader(); renderStatus();
+  document.title = selected ? `${qTitle(byId[selected])} · ${t().pageTitle}` : t().pageTitle;
+  renderPanel(); dirty = true;
+});
+completedToggle.onclick = () => {
+  state.showCompleted = !state.showCompleted; persist(); renderHeader(); dirty = true;
+};
+function renderStatus() {
+  document.getElementById("statusText").textContent = storageOk ? t().saved : t().notSaved;
+  document.getElementById("statusDot").style.background = storageOk ? "var(--green)" : "#BE3C32";
+}
+
+/* ---------- Graph: layout ---------- */
+const canvas = document.getElementById("graph");
+const ctx = canvas.getContext("2d");
+const wrap = document.getElementById("graphWrap");
+let W = 0, H = 0, dpr = 1;
+let view = { k: 1, x: 0, y: 0 };
+let dirty = true;
+
+const CENTER = { A: { x: 0, y: 0 } };
+for (const [s, deg] of Object.entries(SECTION_ANGLE)) {
+  const a = deg * Math.PI / 180;
+  CENTER[s] = { x: Math.cos(a) * 380, y: -Math.sin(a) * 300 };
+}
+const PHYS = { repel: 200, cluster: 0.14, directDist: 55, directK: 0.12, indirectDist: 150, indirectK: 0.002, collide: 18 };
+let seed = 7;
+const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const nodes = QUESTIONS.map(q => {
+  const c = CENTER[q.section];
+  const deg = rel[q.id].neighbors.size;
+  return { id: q.id, s: q.section, x: c.x + (rand() - 0.5) * 80, y: c.y + (rand() - 0.5) * 80, vx: 0, vy: 0,
+           r: q.id === "A1" ? 13 : 6 + Math.sqrt(deg) * 1.8, fixed: q.id === "A1" };
+});
+const N = Object.fromEntries(nodes.map(n => [n.id, n]));
+const links = EDGES.map(e => ({ ...e, s: N[e.a], t: N[e.b] }));
+
+let alpha = 1;
+function tick() {
+  alpha *= 0.985;
+  for (let i = 0; i < nodes.length; i++) {
+    const a = nodes[i];
+    for (let j = i + 1; j < nodes.length; j++) {
+      const b = nodes[j];
+      let dx = b.x - a.x, dy = b.y - a.y;
+      let d2 = dx * dx + dy * dy;
+      if (d2 < 1) { dx = rand() - 0.5; dy = rand() - 0.5; d2 = 1; }
+      const f = PHYS.repel * alpha / d2;
+      a.vx -= dx * f; a.vy -= dy * f; b.vx += dx * f; b.vy += dy * f;
+      const minD = a.r + b.r + PHYS.collide;
+      if (d2 < minD * minD) {
+        const d = Math.sqrt(d2), push = (minD - d) / d * 0.5;
+        a.vx -= dx * push; a.vy -= dy * push; b.vx += dx * push; b.vy += dy * push;
+      }
+    }
+  }
+  for (const l of links) {
+    const dist = l.kind === "direct" ? PHYS.directDist : PHYS.indirectDist;
+    const k = l.kind === "direct" ? PHYS.directK : PHYS.indirectK;
+    const dx = l.t.x - l.s.x, dy = l.t.y - l.s.y;
+    const d = Math.sqrt(dx * dx + dy * dy) || 1;
+    const f = (d - dist) / d * alpha * k;
+    l.s.vx += dx * f; l.s.vy += dy * f; l.t.vx -= dx * f; l.t.vy -= dy * f;
+  }
+  for (const n of nodes) {
+    const c = CENTER[n.s];
+    n.vx += (c.x - n.x) * PHYS.cluster * alpha;
+    n.vy += (c.y - n.y) * PHYS.cluster * alpha;
+    if (n.fixed || n.pinned) { n.vx = 0; n.vy = 0; continue; }
+    n.vx *= 0.6; n.vy *= 0.6;
+    n.x += n.vx; n.y += n.vy;
+  }
+}
+for (let i = 0; i < 400; i++) tick();
+alpha = 0;
+
+/* ---------- Graph: view ---------- */
+const visible = n => state.showCompleted || !state.done[n.id];
+function resize() {
+  dpr = window.devicePixelRatio || 1;
+  W = wrap.clientWidth; H = wrap.clientHeight;
+  canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+  dirty = true;
+}
+function fit() {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const n of nodes) { x0 = Math.min(x0, n.x); y0 = Math.min(y0, n.y); x1 = Math.max(x1, n.x); y1 = Math.max(y1, n.y); }
+  const pad = 90;
+  view.k = Math.min((W - pad * 2) / (x1 - x0), (H - pad * 2) / (y1 - y0), 2);
+  view.x = W / 2 - (x0 + x1) / 2 * view.k;
+  view.y = H / 2 - (y0 + y1) / 2 * view.k;
+  dirty = true;
+}
+function ensureVisible(id) {
+  const n = N[id];
+  if (!n || !W) return;
+  const sx = n.x * view.k + view.x, sy = n.y * view.k + view.y;
+  if (sx < 60 || sx > W - 60 || sy < 60 || sy > H - 60) {
+    view.x = W / 2 - n.x * view.k; view.y = H / 2 - n.y * view.k; dirty = true;
+  }
+}
+const toWorld = (sx, sy) => ({ x: (sx - view.x) / view.k, y: (sy - view.y) / view.k });
+function nodeAt(sx, sy) {
+  const p = toWorld(sx, sy);
+  let best = null, bestD = Infinity;
+  for (const n of nodes) {
+    if (!visible(n)) continue;
+    const d = Math.hypot(n.x - p.x, n.y - p.y);
+    if (d < n.r + 6 / view.k && d < bestD) { best = n; bestD = d; }
+  }
+  return best;
+}
+
+/* ---------- Graph: drawing ---------- */
+let hover = null;
+function draw() {
+  const L = t();
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  ctx.translate(view.x, view.y);
+  ctx.scale(view.k, view.k);
+  const k = view.k;
+  const focus = hover ? hover.id : selected;
+  const focusSet = focus ? new Set([focus, ...rel[focus].neighbors]) : null;
+
+  for (const l of links) {
+    if (!visible(l.s) || !visible(l.t)) continue;
+    const hl = focus && (l.a === focus || l.b === focus);
+    ctx.beginPath();
+    ctx.moveTo(l.s.x, l.s.y); ctx.lineTo(l.t.x, l.t.y);
+    ctx.setLineDash(l.kind === "indirect" ? [2 / k, 4 / k] : []);
+    ctx.lineWidth = (hl ? 1.8 : 1) / k;
+    ctx.strokeStyle = hl ? "#A7BCE6" : (focusSet ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.16)");
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  for (const n of nodes) {
+    if (!visible(n)) continue;
+    const dim = focusSet && !focusSet.has(n.id);
+    ctx.globalAlpha = dim ? 0.22 : 1;
+    ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+    ctx.fillStyle = SECTIONS[n.s].color; ctx.fill();
+    if (state.done[n.id]) {
+      ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 2.5 / k, 0, Math.PI * 2);
+      ctx.lineWidth = 2.2 / k; ctx.strokeStyle = "#44cf6e"; ctx.stroke();
+    }
+    if (n.id === selected) {
+      ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 6 / k, 0, Math.PI * 2);
+      ctx.lineWidth = 2 / k; ctx.strokeStyle = "#ffffff"; ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  const FONT = `Inter, "PingFang TC", "Microsoft JhengHei", sans-serif`;
+  const placed = [];
+
+  // Section labels sit just outside each cluster; their space is reserved first.
+  const sectionLabels = [];
+  ctx.font = `600 ${13 / k}px ${FONT}`;
+  for (const s of Object.keys(SECTION_ANGLE)) {
+    const members = nodes.filter(n => n.s === s && visible(n));
+    if (!members.length) continue;
+    const cx = members.reduce((v, n) => v + n.x, 0) / members.length;
+    const cy = members.reduce((v, n) => v + n.y, 0) / members.length;
+    const len = Math.hypot(cx, cy) || 1;
+    const ux = cx / len, uy = cy / len;
+    const reach = Math.max(...members.map(n => (n.x - cx) * ux + (n.y - cy) * uy + n.r));
+    const off = reach + (Math.abs(uy) > 0.7 ? 22 : 30) / k + Math.abs(ux) * 40 / k;
+    const text = `${SECTIONS[s][state.lang]} · ${sectionCount[s]}`;
+    const x = cx + ux * off, y = cy + uy * off;
+    const w = ctx.measureText(text).width, h = 16 / k;
+    sectionLabels.push({ text, x, y, color: SECTIONS[s].color });
+    placed.push({ x: x - w / 2, y: y - h / 2, w, h });
+  }
+
+  // Nodes also block labels, so a subtitle never covers another question's dot.
+  for (const n of nodes) if (visible(n)) placed.push({ x: n.x - n.r - 1 / k, y: n.y - n.r - 1 / k, w: 2 * n.r + 2 / k, h: 2 * n.r + 2 / k });
+
+  // Subtitle labels: focused ones first, each moved to a free spot so none overlap.
+  const labelAlpha = Math.max(0, Math.min(1, (k - 0.4) / 0.3));
+  const rank = n => n.id === focus ? 3 : (focusSet && focusSet.has(n.id) ? 2 : 1);
+  const hits = r => placed.some(p => r.x < p.x + p.w && r.x + r.w > p.x && r.y < p.y + p.h && r.y + r.h > p.y);
+  ctx.textAlign = "left"; ctx.textBaseline = "top";
+  for (const n of nodes.filter(visible).sort((a, b) => rank(b) - rank(a))) {
+    const strong = focusSet && focusSet.has(n.id);
+    const a = strong ? 1 : (focusSet ? labelAlpha * 0.3 : labelAlpha * 0.7);
+    if (a <= 0.02) continue;
+    const size = (strong ? 12 : 10.5) / k;
+    ctx.font = `${size}px ${FONT}`;
+    const text = qTitle(byId[n.id]);
+    const w = ctx.measureText(text).width, h = size * 1.3, gap = 4 / k;
+    const spots = [
+      { x: n.x - w / 2, y: n.y + n.r + gap },
+      { x: n.x - w / 2, y: n.y - n.r - gap - h },
+      { x: n.x + n.r + gap, y: n.y - h / 2 },
+      { x: n.x - n.r - gap - w, y: n.y - h / 2 },
+    ];
+    if (strong) for (let i = 1; i <= 3; i++) {
+      spots.push({ x: n.x - w / 2, y: n.y + n.r + gap + i * h }, { x: n.x - w / 2, y: n.y - n.r - gap - (i + 1) * h });
+    }
+    let spot = spots.find(c => !hits({ ...c, w, h }));
+    if (!spot) { if (!strong) continue; spot = spots[0]; }
+    placed.push({ ...spot, w, h });
+    ctx.globalAlpha = a;
+    if (strong) {
+      ctx.fillStyle = "rgba(30,30,30,0.8)";
+      ctx.fillRect(spot.x - 3 / k, spot.y - 1 / k, w + 6 / k, h + 1 / k);
+    }
+    ctx.fillStyle = strong ? "#dadada" : "#b3b3b3";
+    ctx.fillText(text, spot.x, spot.y);
+  }
+  ctx.globalAlpha = 1;
+  ctx.textAlign = "center";
+
+  ctx.font = `600 ${13 / k}px ${FONT}`;
+  ctx.textBaseline = "middle";
+  for (const l of sectionLabels) {
+    ctx.globalAlpha = focusSet ? 0.45 : 0.95;
+    ctx.fillStyle = l.color;
+    ctx.fillText(l.text, l.x, l.y);
+  }
+  ctx.globalAlpha = 1;
+}
+
+/* ---------- Graph: interaction ---------- */
+let drag = null;
+canvas.addEventListener("pointerdown", e => {
+  const n = nodeAt(e.offsetX, e.offsetY);
+  drag = { node: n, sx: e.offsetX, sy: e.offsetY, vx: view.x, vy: view.y, moved: false };
+  canvas.setPointerCapture(e.pointerId);
+  if (!n) canvas.classList.add("dragging");
+});
+canvas.addEventListener("pointermove", e => {
+  if (drag) {
+    const dx = e.offsetX - drag.sx, dy = e.offsetY - drag.sy;
+    if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+    if (drag.node) {
+      if (drag.moved && !drag.node.fixed) {
+        const p = toWorld(e.offsetX, e.offsetY);
+        drag.node.pinned = true;
+        drag.node.x = p.x; drag.node.y = p.y; drag.node.vx = 0; drag.node.vy = 0;
+        alpha = Math.max(alpha, 0.25);
+      }
+    } else {
+      view.x = drag.vx + dx; view.y = drag.vy + dy;
+    }
+    dirty = true;
+    return;
+  }
+  const n = nodeAt(e.offsetX, e.offsetY);
+  if (n !== hover) { hover = n; dirty = true; }
+  canvas.classList.toggle("on-node", !!n);
+});
+canvas.addEventListener("pointerup", () => {
+  if (drag && drag.node && !drag.moved) location.hash = `#/q/${drag.node.id}`;
+  if (drag && drag.node) drag.node.pinned = false;
+  drag = null;
+  canvas.classList.remove("dragging");
+});
+canvas.addEventListener("pointerleave", () => { if (!drag && hover) { hover = null; dirty = true; } });
+canvas.addEventListener("wheel", e => {
+  e.preventDefault();
+  const k = Math.max(0.25, Math.min(4, view.k * Math.exp(-e.deltaY * 0.0015)));
+  const p = toWorld(e.offsetX, e.offsetY);
+  view.k = k; view.x = e.offsetX - p.x * k; view.y = e.offsetY - p.y * k;
+  dirty = true;
+}, { passive: false });
+
+/* ---------- Start ---------- */
+new ResizeObserver(() => { const first = !W; resize(); if (first) fit(); }).observe(wrap);
+function frame() {
+  if (alpha > 0.005) { tick(); dirty = true; }
+  if (dirty) { draw(); dirty = false; }
+  requestAnimationFrame(frame);
+}
+renderHeader();
+renderStatus();
+onRoute();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
