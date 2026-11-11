@@ -13,7 +13,7 @@
     --text: #dadada;
     --muted: #999999;
     --faint: #666666;
-    --green: #44cf6e;
+    --green: #34C759;
     --nccu-blue: #23417D;
     --nccu-blue-edge: #3059AB;
     --link: #A7BCE6;
@@ -39,7 +39,10 @@
   .section-title { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
   .row { display: flex; align-items: center; justify-content: space-between; }
   .bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 8px; }
-  .bar > span { display: block; height: 100%; width: 0; background: var(--green); border-radius: 3px; transition: width .25s ease; }
+  .bar { display: flex; }
+  .bar > span { display: block; height: 100%; width: 0; transition: width .25s ease; }
+  .legend { display: flex; gap: 14px; margin-top: 8px; font-size: 12px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
 
   .qhead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .qid { font-size: 18px; font-weight: 600; line-height: 1.4; }
@@ -52,7 +55,11 @@
   .check input { position: absolute; opacity: 0; width: 0; height: 0; }
   .check .box { width: 18px; height: 18px; border-radius: 4px; border: 1.5px solid var(--faint); background: var(--bg2); display: grid; place-items: center; transition: background .15s, border-color .15s; }
   .check .box svg { opacity: 0; }
-  .check input:checked + .box { background: var(--green); border-color: var(--green); }
+  .check input:checked + .box { background: var(--conf, var(--green)); border-color: var(--conf, var(--green)); }
+  .conf { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 12px; }
+  .conf button { border: 1px solid var(--border); background: var(--border); color: var(--muted); border-radius: 6px; padding: 6px 0; cursor: pointer; }
+  .conf button:hover { filter: brightness(1.2); }
+  .conf button.active { color: #10301a; font-weight: 600; }
   .check input:checked + .box svg { opacity: 1; }
   .check input:focus-visible + .box { outline: 2px solid var(--link); outline-offset: 2px; }
 
@@ -400,6 +407,7 @@ const T = {
   zh: {
     pageTitle: "NCCU 面試題庫", view: "圖譜", completed: "已完成",
     progress: "完成度", question: "題目", completion: "完成", answered: "已回答",
+    confLevels: { 1: "不太熟", 2: "還可以", 3: "有把握" },
     placeholder: "寫下你的回答…", save: "儲存", edit: "編輯",
     depth: "深度", levels: { q: "快答", m: "中等", d: "深挖" },
     connections: "連結", direct: "直接", indirect: "間接", none: "無",
@@ -408,6 +416,7 @@ const T = {
   en: {
     pageTitle: "NCCU interview bank", view: "Graph view", completed: "Completed",
     progress: "Progress", question: "Question", completion: "Completion", answered: "Answered",
+    confLevels: { 1: "Shaky", 2: "Okay", 3: "Confident" },
     placeholder: "Write your answer…", save: "Save", edit: "Edit",
     depth: "Depth", levels: { q: "Quick", m: "Medium", d: "Deep" },
     connections: "Connections", direct: "Direct", indirect: "Indirect", none: "None",
@@ -448,10 +457,10 @@ for (const q of QUESTIONS) sectionCount[q.section] = (sectionCount[q.section] ||
 /* ---------- Saved state (this computer only) ---------- */
 const KEY = "nccu-interview-graph-v1";
 let storageOk = true;
-let state = { lang: "zh", showCompleted: true, done: {}, answers: {} };
+let state = { lang: "zh", showCompleted: true, done: {}, answers: {}, conf: {} };
 try {
   const saved = JSON.parse(localStorage.getItem(KEY) || "null");
-  if (saved && typeof saved === "object") state = { ...state, ...saved, done: saved.done || {}, answers: saved.answers || {} };
+  if (saved && typeof saved === "object") state = { ...state, ...saved, done: saved.done || {}, answers: saved.answers || {}, conf: saved.conf || {} };
 } catch { storageOk = false; }
 function persist() {
   try { localStorage.setItem(KEY, JSON.stringify(state)); storageOk = true; }
@@ -462,6 +471,9 @@ const t = () => T[state.lang];
 const qText = q => q[state.lang];
 const qTitle = q => q.title[state.lang];
 const doneCount = () => QUESTIONS.filter(q => state.done[q.id]).length;
+// Confidence: 3 = confident (vibrant apple green), 2 = okay, 1 = shaky (lightest green)
+const CONF_COLOR = { 3: "#34C759", 2: "#8FE0A4", 1: "#D2F5DB" };
+const confOf = id => state.conf[id] || 2;
 
 /* ---------- Routing: #/q/ID ---------- */
 let selected = null;
@@ -488,7 +500,7 @@ document.getElementById("forward").onclick = () => history.forward();
 /* ---------- Panel ---------- */
 const panel = document.getElementById("panel");
 const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const CHECK_SVG = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>';
+const CHECK_SVG = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10301a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>';
 
 function connRow(arrow, id) {
   const q = byId[id];
@@ -499,10 +511,13 @@ function renderPanel() {
   const openBox = document.getElementById("answerBox");
   if (openBox && openBox.dataset.id === selected) draft = openBox.value;
   const n = doneCount();
+  const byConf = { 1: 0, 2: 0, 3: 0 };
+  for (const q of QUESTIONS) if (state.done[q.id]) byConf[confOf(q.id)]++;
   let html = `
     <div class="section">
       <div class="row"><span class="section-title" style="margin:0">${L.progress}</span><span>${n} / ${QUESTIONS.length}</span></div>
-      <div class="bar"><span style="width:${(n / QUESTIONS.length * 100).toFixed(2)}%"></span></div>
+      <div class="bar">${[3, 2, 1].map(c => `<span style="width:${(byConf[c] / QUESTIONS.length * 100).toFixed(2)}%;background:${CONF_COLOR[c]}"></span>`).join("")}</div>
+      <div class="legend">${[3, 2, 1].map(c => `<span><span class="dot" style="background:${CONF_COLOR[c]}"></span>${L.confLevels[c]} ${byConf[c]}</span>`).join("")}</div>
     </div>`;
   if (!selected) {
     panel.innerHTML = html + `<div class="section"><div class="empty">${L.empty}</div></div>`;
@@ -525,7 +540,11 @@ function renderPanel() {
     </div>
     <div class="section">
       <div class="section-title">${L.completion}</div>
-      <label class="check"><input type="checkbox" id="doneBox" ${state.done[selected] ? "checked" : ""}><span class="box">${CHECK_SVG}</span><span>${L.answered}</span></label>
+      <label class="check" style="--conf:${CONF_COLOR[confOf(selected)]}"><input type="checkbox" id="doneBox" ${state.done[selected] ? "checked" : ""}><span class="box">${CHECK_SVG}</span><span>${L.answered}</span></label>
+      <div class="conf">${[1, 2, 3].map(c => {
+        const on = state.done[selected] && confOf(selected) === c;
+        return `<button data-conf="${c}" class="${on ? "active" : ""}" style="${on ? `background:${CONF_COLOR[c]};border-color:${CONF_COLOR[c]}` : ""}">${L.confLevels[c]}</button>`;
+      }).join("")}</div>
       ${editing
         ? `<textarea id="answerBox" data-id="${selected}" placeholder="${L.placeholder}">${esc(draft ?? answer)}</textarea>
            <div class="actions"><button class="btn primary" id="saveBtn">${L.save}</button></div>`
@@ -546,9 +565,14 @@ function renderPanel() {
   panel.innerHTML = html;
 
   document.getElementById("doneBox").onchange = e => {
-    if (e.target.checked) state.done[selected] = true; else delete state.done[selected];
+    if (e.target.checked) state.done[selected] = true; else { delete state.done[selected]; delete state.conf[selected]; }
     persist(); renderPanel(); dirty = true;
   };
+  panel.querySelectorAll(".conf button").forEach(b => b.onclick = () => {
+    state.done[selected] = true;
+    state.conf[selected] = Number(b.dataset.conf);
+    persist(); renderPanel(); dirty = true;
+  });
   const saveBtn = document.getElementById("saveBtn");
   if (saveBtn) saveBtn.onclick = () => {
     const v = document.getElementById("answerBox").value.trim();
@@ -718,11 +742,7 @@ function draw() {
     const dim = focusSet && !focusSet.has(n.id);
     ctx.globalAlpha = dim ? 0.22 : 1;
     ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-    ctx.fillStyle = SECTIONS[n.s].color; ctx.fill();
-    if (state.done[n.id]) {
-      ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 2.5 / k, 0, Math.PI * 2);
-      ctx.lineWidth = 2.2 / k; ctx.strokeStyle = "#44cf6e"; ctx.stroke();
-    }
+    ctx.fillStyle = state.done[n.id] ? CONF_COLOR[confOf(n.id)] : SECTIONS[n.s].color; ctx.fill();
     if (n.id === selected) {
       ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 6 / k, 0, Math.PI * 2);
       ctx.lineWidth = 2 / k; ctx.strokeStyle = "#ffffff"; ctx.stroke();
